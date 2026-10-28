@@ -1,0 +1,104 @@
+// =====================================================================
+// MetroCare Hospital Analytics | DAX measure layer (13 measures)
+// Paste into Power BI Desktop: Modeling > New measure (one per block).
+// Table names assume the Postgres tables are imported as-is:
+//   fact_appointments, fact_billing, dim_date, dim_doctor,
+//   dim_department, dim_patient
+// Create a disposable table named "_Measures" (Enter Data, one blank
+// column) and host all measures there, then hide the blank column.
+// =====================================================================
+
+
+// ---------------------------------------------------------------------
+// APPOINTMENT VOLUME  (measures 1-4)
+// ---------------------------------------------------------------------
+
+// 1
+Total Appointments =
+COUNTROWS ( fact_appointments )
+
+// 2
+Completed Appointments =
+CALCULATE (
+    COUNTROWS ( fact_appointments ),
+    fact_appointments[status] = "Completed"
+)
+
+// 3
+Cancelled Appointments =
+CALCULATE (
+    COUNTROWS ( fact_appointments ),
+    fact_appointments[status] = "Cancelled"
+)
+
+// 4
+No-Show Appointments =
+CALCULATE (
+    COUNTROWS ( fact_appointments ),
+    fact_appointments[status] = "No-Show"
+)
+
+
+// ---------------------------------------------------------------------
+// RATES  (measures 5-6)
+// ---------------------------------------------------------------------
+
+// 5   Format: Percentage, 1 decimal
+Cancellation Rate =
+DIVIDE ( [Cancelled Appointments], [Total Appointments] )
+
+// 6   Format: Percentage, 1 decimal
+No-Show Rate =
+DIVIDE ( [No-Show Appointments], [Total Appointments] )
+
+
+// ---------------------------------------------------------------------
+// REVENUE  (measures 7-9)
+// ---------------------------------------------------------------------
+
+// 7   Format: Currency, 0 decimals
+Total Revenue =
+SUM ( fact_billing[amount] )
+
+// 8   Requires dim_date to be marked as a Date table (full_date column)
+Revenue Previous Month =
+CALCULATE (
+    [Total Revenue],
+    DATEADD ( dim_date[full_date], -1, MONTH )
+)
+
+// 9   Format: Percentage, 1 decimal. Blank for the first month.
+MoM Revenue Growth % =
+VAR _prev = [Revenue Previous Month]
+RETURN
+    IF (
+        NOT ISBLANK ( _prev ),
+        DIVIDE ( [Total Revenue] - _prev, _prev )
+    )
+
+
+// ---------------------------------------------------------------------
+// PAYER MIX  (measures 10-13)
+// ---------------------------------------------------------------------
+
+// 10
+Insurance Revenue =
+CALCULATE (
+    [Total Revenue],
+    fact_billing[payment_type] = "Insurance"
+)
+
+// 11
+Self-Pay Revenue =
+CALCULATE (
+    [Total Revenue],
+    fact_billing[payment_type] = "Self-Pay"
+)
+
+// 12   Format: Percentage, 1 decimal
+Insurance Share % =
+DIVIDE ( [Insurance Revenue], [Total Revenue] )
+
+// 13   Format: Percentage, 1 decimal
+Self-Pay Share % =
+DIVIDE ( [Self-Pay Revenue], [Total Revenue] )
