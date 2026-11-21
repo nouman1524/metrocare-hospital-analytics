@@ -28,13 +28,13 @@ Revenue = net billed amount (quantity x unit price, after discount_pct) for Comp
 
 ## Dashboard
 **Overview**
-![Overview](overview.jpg)
+![Overview](overview.JPG)
 
 **Revenue**
-![Revenue](revenue.jpg)
+![Revenue](Revenue.JPG)
 
 **Appointments**
-![Appointments](appointments.jpg)
+![Appointments](Appointments.JPG)
 
 ## Files
 - `metrocare_analysis.sql`: cleaning view and all analysis queries
